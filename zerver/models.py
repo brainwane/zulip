@@ -880,7 +880,7 @@ def sew_messages_and_reactions(messages, reactions):
     return list(converted_messages.values())
 
 
-class Message(ModelReprMixin, models.Model):
+class AbstractMessage(ModelReprMixin, models.Model):
     sender = models.ForeignKey(UserProfile) # type: UserProfile
     recipient = models.ForeignKey(Recipient) # type: Recipient
     subject = models.CharField(max_length=MAX_SUBJECT_LENGTH, db_index=True) # type: Text
@@ -894,6 +894,12 @@ class Message(ModelReprMixin, models.Model):
     has_attachment = models.BooleanField(default=False, db_index=True) # type: bool
     has_image = models.BooleanField(default=False, db_index=True) # type: bool
     has_link = models.BooleanField(default=False, db_index=True) # type: bool
+
+    class Meta(object):
+        abstract = True
+
+
+class Message(AbstractMessage):
 
     def topic_name(self):
         # type: () -> Text
@@ -1052,6 +1058,12 @@ class Reaction(ModelReprMixin, models.Model):
                   'user_profile__id', 'user_profile__full_name']
         return Reaction.objects.filter(message_id__in=needed_ids).values(*fields)
 
+
+class ArchiveMessage(AbstractMessage):
+    archived_date = models.DateTimeField('data archived', default=timezone.now,
+                                         db_index=True)  # type: datetime.datetime
+
+
 # Whenever a message is sent, for each user current subscribed to the
 # corresponding Recipient object, we add a row to the UserMessage
 # table, which has has columns (id, user profile id, message id,
@@ -1065,9 +1077,8 @@ class Reaction(ModelReprMixin, models.Model):
 #
 # UserMessage is the largest table in a Zulip installation, even
 # though each row is only 4 integers.
-class UserMessage(ModelReprMixin, models.Model):
+class AbstractUserMessage(ModelReprMixin, models.Model):
     user_profile = models.ForeignKey(UserProfile) # type: UserProfile
-    message = models.ForeignKey(Message) # type: Message
     # We're not using the archived field for now, but create it anyway
     # since this table will be an unpleasant one to do schema changes
     # on later
@@ -1077,16 +1088,28 @@ class UserMessage(ModelReprMixin, models.Model):
     flags = BitField(flags=ALL_FLAGS, default=0) # type: BitHandler
 
     class Meta(object):
+        abstract = True
         unique_together = ("user_profile", "message")
+
+    def flags_list(self):
+        # type: () -> List[str]
+        return [flag for flag in self.flags.keys() if getattr(self.flags, flag).is_set]
+
+
+class UserMessage(AbstractUserMessage):
+    message = models.ForeignKey(Message)  # type: Message
 
     def __unicode__(self):
         # type: () -> Text
         display_recipient = get_display_recipient(self.message.recipient)
         return u"<UserMessage: %s / %s (%s)>" % (display_recipient, self.user_profile.email, self.flags_list())
 
-    def flags_list(self):
-        # type: () -> List[str]
-        return [flag for flag in self.flags.keys() if getattr(self.flags, flag).is_set]
+
+class ArchiveUserMessage(AbstractUserMessage):
+    message = models.ForeignKey(ArchiveMessage)  # type: Message
+    archived_date = models.DateTimeField('data archived', default=timezone.now,
+                                         db_index=True)  # type: datetime.datetime
+
 
 def parse_usermessage_flags(val):
     # type: (int) -> List[str]
@@ -1097,6 +1120,7 @@ def parse_usermessage_flags(val):
             flags.append(flag)
         mask <<= 1
     return flags
+
 
 class Attachment(ModelReprMixin, models.Model):
     file_name = models.TextField(db_index=True) # type: Text
