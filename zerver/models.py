@@ -1122,17 +1122,24 @@ def parse_usermessage_flags(val):
     return flags
 
 
-class Attachment(ModelReprMixin, models.Model):
-    file_name = models.TextField(db_index=True) # type: Text
+class AbstractAttachment(ModelReprMixin, models.Model):
+    file_name = models.TextField(db_index=True)  # type: Text
     # path_id is a storage location agnostic representation of the path of the file.
     # If the path of a file is http://localhost:9991/user_uploads/a/b/abc/temp_file.py
     # then its path_id will be a/b/abc/temp_file.py.
-    path_id = models.TextField(db_index=True) # type: Text
-    owner = models.ForeignKey(UserProfile) # type: UserProfile
-    realm = models.ForeignKey(Realm, blank=True, null=True) # type: Realm
-    is_realm_public = models.BooleanField(default=False) # type: bool
-    messages = models.ManyToManyField(Message) # type: Manager
-    create_time = models.DateTimeField(default=timezone.now, db_index=True) # type: datetime.datetime
+    path_id = models.TextField(db_index=True)  # type: Text
+    owner = models.ForeignKey(UserProfile)  # type: UserProfile
+    realm = models.ForeignKey(Realm, blank=True, null=True)  # type: Realm
+    is_realm_public = models.BooleanField(default=False)  # type: bool
+    create_time = models.DateTimeField(default=timezone.now,
+                                       db_index=True)  # type: datetime.datetime
+
+    class Meta(object):
+        abstract = True
+
+
+class Attachment(AbstractAttachment):
+    messages = models.ManyToManyField(Message)  # type: Manager
 
     def __unicode__(self):
         # type: () -> Text
@@ -1141,6 +1148,12 @@ class Attachment(ModelReprMixin, models.Model):
     def is_claimed(self):
         # type: () -> bool
         return self.messages.count() > 0
+
+
+class ArchiveAttachment(AbstractAttachment):
+    archived_date = models.DateTimeField('data archived', default=timezone.now,
+                                         db_index=True)  # type: datetime.datetime
+    messages = models.ManyToManyField(ArchiveMessage)  # type: Manager
 
 def get_old_unclaimed_attachments(weeks_ago):
     # type: (int) -> Sequence[Attachment]
