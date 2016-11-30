@@ -1910,6 +1910,7 @@ class HomeTest(ZulipTestCase):
             "realm_invite_by_admins_only",
             "realm_invite_required",
             "realm_message_content_edit_limit_seconds",
+            "realm_message_retention_days",
             "realm_name",
             "realm_restricted_to_domain",
             "realm_uri",

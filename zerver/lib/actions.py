@@ -122,8 +122,8 @@ def log_event(event):
         os.mkdir(settings.EVENT_LOG_DIR)
 
     template = os.path.join(settings.EVENT_LOG_DIR,
-                            '%s.' + platform.node()
-                            + datetime.datetime.now().strftime('.%Y-%m-%d'))
+        '%s.' + platform.node()
+        + datetime.datetime.now().strftime('.%Y-%m-%d'))
 
     with lockfile(template % ('lock',)):
         with open(template % ('events',), 'a') as log:
@@ -590,6 +590,20 @@ def do_set_realm_waiting_period_threshold(realm, threshold):
         op="update",
         property='waiting_period_threshold',
         value=threshold,
+    )
+    send_event(event, active_user_ids(realm))
+
+
+def do_set_realm_message_retention_days(realm, message_retention_days):
+    # type: (Realm, int) -> None
+
+    realm.message_retention_days = message_retention_days
+    realm.save(update_fields=['message_retention_days'])
+    event = dict(
+        type="realm",
+        op="update_dict",
+        property="default",
+        data=dict(message_retention_days=message_retention_days),
     )
     send_event(event, active_user_ids(realm))
 
@@ -3089,6 +3103,7 @@ def fetch_initial_state_data(user_profile, event_types, queue_id):
         state['realm_add_emoji_by_admins_only'] = user_profile.realm.add_emoji_by_admins_only
         state['realm_allow_message_editing'] = user_profile.realm.allow_message_editing
         state['realm_message_content_edit_limit_seconds'] = user_profile.realm.message_content_edit_limit_seconds
+        state['realm_message_retention_days'] = user_profile.realm.message_retention_days
         state['realm_default_language'] = user_profile.realm.default_language
         state['realm_waiting_period_threshold'] = user_profile.realm.waiting_period_threshold
 

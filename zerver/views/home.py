@@ -223,6 +223,7 @@ def home_real(request):
         realm_add_emoji_by_admins_only = register_ret['realm_add_emoji_by_admins_only'],
         realm_allow_message_editing = register_ret['realm_allow_message_editing'],
         realm_message_content_edit_limit_seconds = register_ret['realm_message_content_edit_limit_seconds'],
+        realm_message_retention_days=register_ret['realm_message_retention_days'],
         realm_restricted_to_domain = register_ret['realm_restricted_to_domain'],
         realm_default_language = register_ret['realm_default_language'],
         realm_waiting_period_threshold = register_ret['realm_waiting_period_threshold'],
