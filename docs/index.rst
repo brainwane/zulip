@@ -125,6 +125,7 @@ Contents:
    html_css
    full-text-search
    translating
+   retention
    logging
    release-checklist
    README
