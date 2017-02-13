@@ -3,39 +3,41 @@
 
 ## Overview
 
-This document describes Retention policy feature. This policy provides
-tools with help of which one can move expired messages and attachments
-to archive tables, if the retention period is set in realm organization
-settings. And remove archived messages from archive tables after
-expiring of archive retention period if is not necessary to restore
-these messages.
+This document describes the retention policy feature. If you set the
+retention period in the realm (organization) settings, you can use
+these tools to move old messages and attachments to archive tables,
+restore messages from the archive back into the main tables, and
+finally delete archived messages and attachments from the archive
+tables after the retention period expires.
 
-Zulip contains console commands `management/commands/archive_messages.py`
-to move expired messages to archive tables and
-`management/commands/remove_old_archived_data.py` to remove archived
-messages and archived attachments permanently.
+Zulip offers the console commands
+`management/commands/archive_messages.py` to move expired data to
+archive tables, and `management/commands/remove_old_archived_data.py`
+to remove archived messages and archived attachments permanently.
+
+## Front-end admin settings
+
+To enable the realm retention policy, you should add a value to the
+`Retention period for messages in days` field in the "administration"
+part of the "Organization settings" screen.
+
+To disable this feature, leave this field empty; Zulip will simply
+accumulate messages and the console commands will not work.
 
 
-## Archive django models
+## Database tables storing archive data
 
-Archiving tables were created to save removed data temporarily
-for restoring:
+Before deleting the old data, Zulip first moves it to archiving
+tables. It lives there in case you want to restore it, or until you
+delete it. The tables are:
 
   `zerver.models.ArchiveMessage`
   `zerver.models.ArchiveUserMessage`
   `zerver.models.ArchiveAttachment`
 
-These models are inherited from abstract model classes which are common
-for real and archive records.
+These Django models are inherited from abstract model classes which
+are common for newer and archived records.
 
-Archiving tables are cleaned when `ARCHIVE_DATA_RETENTION_DAYS` from
-project settings is expired for table record by launching
-`management/commands/remove_old_archived_data.py` management command.
-
-
-## Retention tools
-
-Retention tools are located in `zerver/lib/retention.py`.
 
 ### Moving expired messages and attachments to archive
 
@@ -48,16 +50,20 @@ Retention tools methods:
   `zerver.lib.retention.move_expired_attachments_message_rows_to_archive`
   `zerver.lib.retention.archive_messages`
 
-As Django ORM is not so flexible as raw SQL language queries are, we had
-to use sql queries and db connector directly in tools for moving data
-to archive. This decision allows to move the data in one query.
+Since the Django ORM is not as flexible as raw SQL language queries
+are, we had to use SQL queries and a database connector directly in
+these tools for moving data to archive tables. This decision lets
+Zulip move the data in one query.
 
 Messages and attachments are moved to archive when all `user_messages`
-related to them are moved to archive.
+related to them are moved to archive tables.
 
-Method `archive_messages` is used as result method which contains
-archiving and removing methods in a correct order.
+Zulip uses `archive_messages` as a result method which contains
+archiving and removal methods in proper sequence.
 
+Archiving tables are cleaned when `ARCHIVE_DATA_RETENTION_DAYS` from
+project settings is expired for table record by launching
+`management/commands/remove_old_archived_data.py` management command.
 
 ### Deleting expired messages and attachments
 
@@ -101,13 +107,6 @@ The order of launching jobs is important, as the archiving job
 should clean all the related objects at this moment. In other case,
 it will be done next time.
 
-## Front-end admin settings
-
-To enable realm retention policy you should add value to the
-`Retention period for messages in days` form field in
-`Organization settings` form from administration part. To disable this
-feature leave this field empty.
-
 ## Restoring of archived data by Realm
 
 Retention tools methods:
@@ -135,6 +134,9 @@ Example of command:
   `./management restore_realm_archived_data zulip.com`
 
 
-## Tests
+## Code and tests
 
-Test cases are descibed in `zerver/tests/test_retention.py`.
+The retention policy code (the code the management commands execute)
+is located in `zerver/lib/retention.py`
+
+Test cases are described in `zerver/tests/test_retention.py`.
