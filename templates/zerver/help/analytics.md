@@ -1,18 +1,18 @@
 # Analytics
 
-Zulip provides analytics for tracking various usage statistics about you and
+Zulip provides analytics to help you track various usage statistics about you and
 your organization.
-This will allow you to have a holistic view of your organization's communications.
+This allows you to have a holistic view of your organization's communications.
 
-Analytics can be accessed via the [stats](/stats) page.
+You can access analytics on the [stats](/stats) page.
 
 ### Messages Sent Over Time
 
-* By default the number of messages sent by **Humans** (users) is shown, but
-you can also view the number of messages sent by bots by clicking on **Bots** at the
-top right.
+* By default Zulip shows the number of messages sent by **Humans**
+(users), but you can click to include or exclude **Me**, **Humans** or
+**Bots** at the top right.
 
-* Apart from the options already provided, custom time frames are also possible by clicking
+* Apart from the default options, you can choose custom time frames by clicking
 and dragging the slider as shown below.
 
     ![Sliding window](/static/images/help/stats-sliding-window.png)
@@ -24,7 +24,7 @@ and dragging the slider as shown below.
 ### Messages Sent by Client
 
 * You can view the message distribution based on which client (platform) was
-used for sending them.
+used to send them.
 
     ![Message-by-client](/static/images/help/stats-message-by-client.png)
 
@@ -41,7 +41,7 @@ used for sending them.
 
 You can view the number of daily active users over a particular time frame.
 
-* Number of active users today is shown separately at the botton center.
+* Number of active users today is displayed separately at the bottom center.
 
     ![Number-of-users](/static/images/help/stats-number-users.png)
 
